@@ -51,19 +51,16 @@ jobs:
         id: decide
         run: |
           TAG="${{ steps.resolve.outputs.tag }}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
           if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "ℹ️  Tag $TAG already exists."
-            # If triggered manually, still allow a rebuild of an existing tag
-            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-              echo "should_build=true" >> $GITHUB_OUTPUT
-            else
-              echo "should_build=false" >> $GITHUB_OUTPUT
-              echo "ℹ️  Version unchanged — skipping build."
-            fi
+            echo "ℹ️  Tag $TAG already exists — updating to latest commit."
+            git tag -f "$TAG"
+            git push -f origin "$TAG" || true
+            echo "should_build=true" >> $GITHUB_OUTPUT
           else
             echo "✅ New version detected — creating tag $TAG"
-            git config user.name  "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
             git tag "$TAG"
             git push origin "$TAG"
             echo "should_build=true" >> $GITHUB_OUTPUT
@@ -105,11 +102,17 @@ jobs:
           mkdir -p android/app/src/main/res
           npx expo export:embed --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
 
-      - name: Build Android Release (APK & AAB)
+      - name: Build Android Release APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease bundleRelease --no-daemon
+          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=2048m"
+
+      - name: Build Android Release AAB
+        run: |
+          cd android
+          ./gradlew bundleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=2048m"
+        continue-on-error: true
 
       - name: Prepare Android Artifacts
         run: |
@@ -174,16 +177,18 @@ jobs:
           cd ios
           pod install
 
-      - name: Build iOS Simulator App (.app.zip)
+      - name: Build iOS Simulator App (.app)
         run: |
           cd ios
           xcodebuild -workspace Glyph.xcworkspace \
             -scheme Glyph \
             -configuration Release \
-            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS=""
 
       - name: Package iOS Simulator Bundle
         run: |
