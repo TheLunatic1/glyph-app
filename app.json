@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Glyph",
+    "slug": "glyph-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0a0d14"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.glyph.mobile",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Glyph uses Face ID to securely authenticate and unlock your encrypted SSH server vault."
+      }
+    },
+    "android": {
+      "package": "dev.glyph.mobile",
+      "permissions": [
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "INTERNET"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#0a0d14",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Glyph to use Face ID to unlock your server vault."
+        }
+      ]
+    ]
+  }
+}
