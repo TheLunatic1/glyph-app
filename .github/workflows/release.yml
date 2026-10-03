@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to release (e.g. v2.7.5) — leave empty to use version in package.json'
+        description: 'Tag to release (e.g. v1.0.0) — leave empty to use version in package.json'
         required: false
         type: string
 
@@ -144,13 +144,18 @@ jobs:
   build-ios:
     needs: prepare
     if: needs.prepare.outputs.should_build == 'true'
-    runs-on: macos-14
+    runs-on: macos-15
     permissions:
       contents: write
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Select Xcode 16.2
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
