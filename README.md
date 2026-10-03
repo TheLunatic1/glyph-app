@@ -22,10 +22,10 @@
 
 ## ✨ Key Features
 
-### 1. Animated Launch & Glassmorphic UI
-* **Opening Splash Animation:** Sleek animated breathing logo, glowing neon backdrop, and smooth launch transitions.
+### 1. Modern Glassmorphic UI & Adaptive App Icon
 * **Modern Dark Glassmorphic Design:** Deep obsidian dark mode (`#0a0d14`), glowing accent rings, and polished typography.
-* **Adaptive App Icon:** Native Android adaptive icon with dynamic background/foreground layers.
+* **Official Glyph Adaptive Icon:** High-resolution neon Glyph logo with native Android background and foreground layers across all display densities.
+* **Instant Responsive Launch:** Direct, fast boot sequence directly to your encrypted servers dashboard.
 
 ### 2. Live Hardware Telemetry & Diagnostic Modals
 * **5-Metric Real-Time Dashboard:** SVG circular gauge meters for CPU Usage, Memory Usage, Disk Usage, GPU Detection, and Dual RX/TX Network Bandwidth.
