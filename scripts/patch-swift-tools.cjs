@@ -1,21 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-function walkSync(dir, fileList = []) {
-  if (!fs.existsSync(dir)) return fileList;
-  const files = fs.readdirSync(dir);
-  for (const file of files) {
-    const filePath = path.join(dir, file);
-    if (fs.statSync(filePath).isDirectory()) {
-      walkSync(filePath, fileList);
-    } else {
-      fileList.push(filePath);
-    }
-  }
-  return fileList;
-}
-
-// 1. Ensure Package.swift has swift-tools-version: 6.2 for Xcode 26 / Swift 6.2
+// 1. Patch Package.swift to disable strict isolation checks causing data race errors on C++ raw pointers
 const packageFiles = [
   path.join(__dirname, '..', 'node_modules', 'expo-modules-jsi', 'apple', 'Package.swift'),
   path.join(__dirname, '..', 'node_modules', '@expo', 'expo-modules-macros-plugin', 'apple', 'Package.swift'),
@@ -24,11 +10,18 @@ const packageFiles = [
 for (const file of packageFiles) {
   if (fs.existsSync(file)) {
     let content = fs.readFileSync(file, 'utf8');
-    if (content.includes('// swift-tools-version: 6.0')) {
-      content = content.replace(/\/\/ swift-tools-version: 6\.0/g, '// swift-tools-version: 6.2');
-      fs.writeFileSync(file, content, 'utf8');
-      console.log(`[Patch] Restored ${path.basename(file)} to swift-tools-version: 6.2`);
+
+    // Remove experimental isolation features causing data race errors on raw pointers
+    content = content.replace(/\.enableUpcomingFeature\("NonisolatedNonsendingByDefault"\),?/g, '');
+    content = content.replace(/\.enableUpcomingFeature\("InferIsolatedConformances"\),?/g, '');
+
+    // Add -strict-concurrency=minimal to unsafeFlags if not present
+    if (content.includes('.unsafeFlags([') && !content.includes('"-strict-concurrency=minimal"')) {
+      content = content.replace('.unsafeFlags([', '.unsafeFlags([\n          "-strict-concurrency=minimal",');
     }
+
+    fs.writeFileSync(file, content, 'utf8');
+    console.log(`[Patch] Updated compiler flags in ${path.basename(file)}`);
   }
 }
 
@@ -51,25 +44,6 @@ if (fs.existsSync(runtimeSchedulerHeader)) {
     content = content.replace(/SWIFT_RETURNS_RETAINED\s+RuntimeScheduler\(/g, 'RuntimeScheduler(');
     fs.writeFileSync(runtimeSchedulerHeader, content, 'utf8');
     console.log('[Patch] Stripped invalid SWIFT_RETURNS_RETAINED from RuntimeScheduler constructors in RuntimeScheduler.h');
-  }
-}
-
-// 3. Restore weak let in Swift files for Sendable conformity in Swift 6.2
-const jsiDir = path.join(__dirname, '..', 'node_modules', 'expo-modules-jsi', 'apple', 'Sources');
-const swiftFiles = walkSync(jsiDir).filter(f => f.endsWith('.swift'));
-
-for (const file of swiftFiles) {
-  let content = fs.readFileSync(file, 'utf8');
-  let changed = false;
-
-  if (content.includes('weak var runtime: JavaScriptRuntime?')) {
-    content = content.replace(/weak\s+var\s+runtime:\s*JavaScriptRuntime\?/g, 'weak let runtime: JavaScriptRuntime?');
-    changed = true;
-  }
-
-  if (changed) {
-    fs.writeFileSync(file, content, 'utf8');
-    console.log(`[Patch] Restored Sendable weak let in ${path.relative(jsiDir, file)}`);
   }
 }
 
