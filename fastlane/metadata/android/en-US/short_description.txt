@@ -1,0 +1,1 @@
+Glassmorphic SSH client & server manager with live telemetry and Docker.

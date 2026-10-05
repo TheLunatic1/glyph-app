@@ -1,0 +1,11 @@
+Glyph Mobile is a modern, privacy-first, glassmorphic SSH and server management application designed for Android with full parity to Desktop Glyph.
+
+Key Features:
+• Live Server Telemetry: Real-time monitoring of CPU per-thread load, RAM & Swap allocation, Storage disk mount partitions, multi-vendor GPU metrics, and Network interface throughput.
+• Interactive SSH Terminal: Full-featured mobile PTY terminal with a quick-access accessory bar for ESC, TAB, CTRL, ALT, ^C, ^Z, ^D, pipes, and slash shortcuts.
+• SFTP File Manager & Remote Code Editor: Browse remote directories, view files, upload/download, and edit configuration files on the fly.
+• Docker Container Management: Monitor running containers, inspect status, view real-time logs, and restart/stop services.
+• ZeroTier Network Overlay: First-class ZeroTier Network ID support with status indicators and mesh routing.
+• OS Auto-Detection: Automatic Linux distro and OS detection with visual distro badges (Ubuntu, Debian, Alpine, CentOS, Arch, Fedora, macOS, Windows).
+• Encrypted Vault Interoperability: Biometric authentication (Fingerprint / Face ID) and 100% interoperable master-password-encrypted AES-256-GCM export/import compatible with Desktop Glyph.
+• Zero Tracking & Analytics: 100% Free and Open Source (FLOSS) under the Apache 2.0 License. No ads, no trackers, and no telemetry.
