@@ -1,5 +1,3 @@
-// Settings & App Configuration Screen for Glyph Mobile
-// Trademark Attribution, Biometrics, Terminal & MCP Relay
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -12,8 +10,11 @@ import {
   Platform,
   Alert,
   Linking,
-  Image
+  Image,
+  StatusBar,
+  ActivityIndicator
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import {
   Shield,
@@ -25,9 +26,14 @@ import {
   HardDrive,
   Check,
   ChevronLeft,
-  ExternalLink
+  ExternalLink,
+  Zap,
+  RotateCw,
+  Sparkles
 } from 'lucide-react-native';
 import { COLORS } from '../theme/colors';
+import { APP_VERSION_TAG } from '../constants/appInfo';
+import { checkForAppUpdate } from '../services/updateService';
 import { getSettings, saveSettings } from '../services/vaultStorage';
 import { setMasterPin, checkBiometricHardware } from '../services/authService';
 
@@ -37,7 +43,15 @@ const GithubIcon = ({ size = 16, color = '#ffffff' }) => (
   </Svg>
 );
 
-export default function SettingsScreen({ onBack, onOpenExport, onOpenImport }) {
+export default function SettingsScreen({
+  onBack,
+  onOpenExport,
+  onOpenImport,
+  updateInfo,
+  onOpenUpdateModal,
+  onCheckForUpdate
+}) {
+  const insets = useSafeAreaInsets();
   const [biometricsEnabled, setBiometricsEnabled] = useState(true);
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
@@ -47,6 +61,8 @@ export default function SettingsScreen({ onBack, onOpenExport, onOpenImport }) {
   const [desktopPort, setDesktopPort] = useState('15354');
   const [bioHardware, setBioHardware] = useState({ hasHardware: false });
   const [savedBadge, setSavedBadge] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateStatusMsg, setUpdateStatusMsg] = useState(null);
 
   useEffect(() => {
     load();
@@ -105,8 +121,50 @@ export default function SettingsScreen({ onBack, onOpenExport, onOpenImport }) {
     setTimeout(() => setSavedBadge(false), 2000);
   };
 
+  const handleCheckUpdates = async () => {
+    if (onCheckForUpdate) {
+      onCheckForUpdate();
+      return;
+    }
+
+    setCheckingUpdate(true);
+    setUpdateStatusMsg(null);
+    try {
+      const result = await checkForAppUpdate();
+      setCheckingUpdate(false);
+      if (result.updateAvailable) {
+        if (onOpenUpdateModal) {
+          onOpenUpdateModal(result);
+        } else {
+          Alert.alert(
+            `Update Available: ${result.latestVersion}`,
+            `A new release of Glyph Mobile is available!\n\nWhat's New:\n${result.releaseNotes?.slice(0, 200)}...`,
+            [
+              { text: 'Later', style: 'cancel' },
+              { text: 'Download APK', onPress: () => Linking.openURL(result.downloadUrl) }
+            ]
+          );
+        }
+      } else {
+        setUpdateStatusMsg(`You're up to date! (${APP_VERSION_TAG})`);
+        setTimeout(() => setUpdateStatusMsg(null), 3500);
+      }
+    } catch (err) {
+      setCheckingUpdate(false);
+      setUpdateStatusMsg('Could not check for updates');
+      setTimeout(() => setUpdateStatusMsg(null), 3500);
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: Math.max(insets.top, Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 20) + 6,
+        },
+      ]}
+    >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
@@ -123,7 +181,15 @@ export default function SettingsScreen({ onBack, onOpenExport, onOpenImport }) {
         </View>
       </View>
 
-      <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
+      <ScrollView
+        style={styles.body}
+        contentContainerStyle={[
+          styles.bodyContent,
+          {
+            paddingBottom: Math.max(insets.bottom, 24) + 30,
+          },
+        ]}
+      >
         {/* Author & Trademark Card (Desktop Parity) */}
         <View style={styles.trademarkCard}>
           <View style={styles.trademarkTop}>
@@ -135,7 +201,7 @@ export default function SettingsScreen({ onBack, onOpenExport, onOpenImport }) {
               <View style={styles.trademarkTitleRow}>
                 <Text style={styles.trademarkTitle}>Glyph</Text>
                 <View style={styles.versionBadge}>
-                  <Text style={styles.versionText}>v1.0.0</Text>
+                  <Text style={styles.versionText}>{APP_VERSION_TAG}</Text>
                 </View>
               </View>
               <Text style={styles.trademarkSubtitle}>Secure SSH & Server Management</Text>
@@ -300,6 +366,57 @@ export default function SettingsScreen({ onBack, onOpenExport, onOpenImport }) {
           </View>
         </View>
 
+        {/* App Updates & Releases */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Zap size={18} color={COLORS.primaryLight} style={{ marginRight: 8 }} />
+            <Text style={styles.sectionTitle}>App Updates & Releases</Text>
+          </View>
+          <Text style={styles.sectionDescription}>
+            Glyph Mobile queries official GitHub releases for new capabilities, performance upgrades, and bug fixes.
+          </Text>
+
+          <View style={styles.updateCard}>
+            <View style={styles.updateCardLeft}>
+              <Text style={styles.updateCardTitle}>Current Version</Text>
+              <Text style={styles.updateCardVersion}>{APP_VERSION_TAG}</Text>
+            </View>
+
+            {updateInfo?.updateAvailable ? (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => onOpenUpdateModal && onOpenUpdateModal(updateInfo)}
+                style={styles.updateAvailableBtn}
+              >
+                <Sparkles size={14} color="#ffffff" style={{ marginRight: 4 }} />
+                <Text style={styles.updateAvailableBtnText}>View {updateInfo.latestVersion}</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                disabled={checkingUpdate}
+                onPress={handleCheckUpdates}
+                style={styles.checkUpdateBtn}
+              >
+                {checkingUpdate ? (
+                  <ActivityIndicator size="small" color={COLORS.primaryLight} />
+                ) : (
+                  <>
+                    <RotateCw size={14} color={COLORS.primaryLight} style={{ marginRight: 5 }} />
+                    <Text style={styles.checkUpdateBtnText}>Check Now</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {updateStatusMsg && (
+            <View style={styles.updateStatusBox}>
+              <Check size={13} color={COLORS.emeraldLight} style={{ marginRight: 5 }} />
+              <Text style={styles.updateStatusText}>{updateStatusMsg}</Text>
+            </View>
+          )}
+        </View>
+
         {/* Backup & Restore */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -325,7 +442,7 @@ export default function SettingsScreen({ onBack, onOpenExport, onOpenImport }) {
           <Text style={styles.footerText}>
             Glyph • Made by <Text style={{ color: '#818cf8', fontWeight: '700' }}>TheLunatic1 (Salman Toha)</Text>
           </Text>
-          <Text style={styles.footerSubtext}>v1.0.0 • All rights reserved</Text>
+          <Text style={styles.footerSubtext}>{APP_VERSION_TAG} • All rights reserved</Text>
         </View>
       </ScrollView>
     </View>
@@ -336,7 +453,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0d14',
-    paddingTop: Platform.OS === 'ios' ? 44 : 20,
   },
   header: {
     flexDirection: 'row',
@@ -620,6 +736,80 @@ const styles = StyleSheet.create({
   backupBtnText: {
     fontSize: 13,
     fontWeight: '700',
+  },
+  updateCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    padding: 12,
+  },
+  updateCardLeft: {
+    flex: 1,
+  },
+  updateCardTitle: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  updateCardVersion: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#ffffff',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  checkUpdateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.35)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  checkUpdateBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.primaryLight,
+  },
+  updateAvailableBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#6366f1',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  updateAvailableBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  updateStatusBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.25)',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginTop: 10,
+  },
+  updateStatusText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.emeraldLight,
   },
   footerInfo: {
     alignItems: 'center',

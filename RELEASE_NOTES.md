@@ -1,17 +1,20 @@
-## v1.0.0 — Initial Mobile Release: Live Telemetry, Terminal, SFTP, Docker & Encrypted Vault
+## v1.0.1 — In-App Update System, Automated Versioning & Safe Area Inset Fixes
 
-### What's New & Core Capabilities
+### What's New & Improvements
 
-- **Real-Time 5-Metric Telemetry:** Live hardware dashboard featuring CPU Usage, Memory Usage, Disk Usage, GPU Detection & Usage, and Network Speed in/out gauges with animated SVG progress rings.
-- **Interactive Hardware Breakdown Modals:** 
-  - **CPU Details:** Real-time 1m, 5m, 15m load averages, active/sleeping task counts, per-thread load bars (`cpu0`..`cpuN`), and thermal sensors status with driver guidance (`lm-sensors`).
-  - **Memory & Swap Details:** Total RAM, Used, Buff/Cache, Free RAM breakdown with color-coded bars, plus Swap partition metrics.
-  - **Storage & Partitions:** Live filesystem mount table (`/`, `/boot`, `/run`, `/boot/efi`, etc.) with partition sizes, free space, and device paths.
-  - **GPU Details & Driver Setup:** Multi-vendor probe (NVIDIA `nvidia-smi`, AMD `/sys/class/drm`, Intel GPU) with 1-click driver installation guidance (`nvidia-utils-535`, `rocm-smi`, `intel-gpu-tools`).
-  - **Network Interfaces:** Multi-interface bandwidth table (`lo`, `ens3`, `docker0`, bridges `br-*`, and `veth*`) with live transfer speeds and accumulated RX volumes.
-- **Interactive Terminal & Mobile Accessory Bar:** ANSI terminal with mobile helper bar (ESC, TAB, CTRL, ALT, ^C, ^Z, ^D, arrows, pipe `|`, slash `/`) for effortless mobile shell sessions.
-- **Remote SFTP File Browser & Code Editor:** Directory explorer, streaming file downloads with native system share sheets, and remote code/config editor with line numbers and instant save.
-- **Docker Container Management:** Real-time search by container name, ID, or image, live start/stop/restart/remove controls, and streaming container logs viewer with search & clipboard copy.
-- **SSH Tunnels & Secrets:** Port-forwarding tunnel manager and encrypted server secrets vault with terminal auto-injection.
-- **Encrypted Backup Vault:** AES-256-GCM master-password encrypted backup import and export compatible with Desktop Glyph.
-- **Security & Privacy:** Biometric lock (Face ID / Touch ID) and Master PIN authentication safeguarding all credentials locally.
+- **In-App Update Notification System (Desktop Parity):**
+  - **Automated Background Check:** Performs a lightweight, silent check against official GitHub Releases on startup.
+  - **Release Notes & APK Modal:** Shows a glassmorphic update dialog with changelog details, release date, download size, direct 1-tap APK download button, and GitHub release link.
+  - **Header Notification Pill:** Displays an interactive `⚡ Update: vX.X.X` badge on the dashboard when a newer release is detected.
+  - **Manual Update Checker:** Added an "App Updates & Releases" section in Settings with live check status, spinner feedback, and version verification.
+- **Automated Single-Source Versioning:**
+  - Dynamic `package.json` single source of truth across all mobile screens (`ServerListScreen`, `SettingsScreen`) and app constants.
+  - Gradle `android/app/build.gradle` now parses `versionName` and calculates `versionCode` automatically from `package.json` at build time.
+- **Status Bar & Notch Clearance:**
+  - Resolved status bar and notch/cutout overlaps across all Android devices (Xiaomi, Samsung OneUI, OnePlus OxygenOS, Google Pixel). Screen headers, server title banners, OS badges, and back navigation controls now dynamically adapt to `StatusBar.currentHeight` and safe area top insets.
+- **3-Button Navigation Bar Compatibility:**
+  - Added dynamic bottom safe insets across the connected server hub navigation tabs (`Stats`, `Terminal`, `Docker`, `SFTP`, `Snippets`, `Tunnels`, `Secrets`) and all action modals, preventing Android system buttons (`◀`, `●`, `■`) and gesture home indicators from covering navigation controls.
+- **Settings & Vault Polish:**
+  - Updated the Settings screen and modal action sheets with adaptive top and bottom padding for consistent edge-to-edge layout rendering.
+- **Bundle & Asset Optimization:**
+  - Recompiled production embedded JS bundle and native assets.

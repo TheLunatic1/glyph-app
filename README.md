@@ -64,7 +64,7 @@
 
 ### Android (Direct APK Sideload)
 1. Go to the [Latest Releases](https://github.com/TheLunatic1/glyph-app/releases/latest) page.
-2. Download `Glyph-Mobile-Android-v1.0.0.apk`.
+2. Download `Glyph-Mobile-Android-v1.0.1.apk` (or `app-release.apk`).
 3. Tap the downloaded APK to install on your Android device (ensure "Install from Unknown Sources" is enabled in your browser/file manager).
 
 ---

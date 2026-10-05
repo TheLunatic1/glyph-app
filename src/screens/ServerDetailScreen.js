@@ -10,8 +10,10 @@ import {
   TouchableOpacity,
   Platform,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  StatusBar
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import * as FileSystem from 'expo-file-system';
@@ -66,6 +68,7 @@ import { getTunnels, saveTunnel, toggleTunnel, deleteTunnel } from '../services/
 import { getServerSecrets, saveServerSecrets } from '../services/vaultStorage';
 
 export default function ServerDetailScreen({ server, onBack }) {
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'terminal' | 'docker' | 'sftp' | 'commands' | 'tunnels' | 'secrets'
   const [metrics, setMetrics] = useState({});
   const [terminalOutput, setTerminalOutput] = useState('');
@@ -439,7 +442,14 @@ export default function ServerDetailScreen({ server, onBack }) {
   return (
     <View style={styles.container}>
       {/* Top Navigation Header */}
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: Math.max(insets.top, Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 20) + 6,
+          },
+        ]}
+      >
         <TouchableOpacity
           onPress={() => {
             sshService.disconnect();
@@ -961,7 +971,14 @@ export default function ServerDetailScreen({ server, onBack }) {
       </View>
 
       {/* Bottom Tabs Navigation */}
-      <View style={styles.bottomNav}>
+      <View
+        style={[
+          styles.bottomNav,
+          {
+            paddingBottom: Math.max(insets.bottom, 12),
+          },
+        ]}
+      >
         {tabs.map(tab => {
           const Icon = tab.icon;
           const isSelected = activeTab === tab.id;
@@ -1061,7 +1078,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.08)',
@@ -1639,8 +1655,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f121d',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    paddingVertical: 8,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+    paddingTop: 8,
   },
   navTab: {
     flex: 1,

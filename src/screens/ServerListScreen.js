@@ -10,8 +10,10 @@ import {
   Platform,
   Modal,
   Image,
-  Linking
+  Linking,
+  StatusBar
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Plus,
   Search,
@@ -21,9 +23,11 @@ import {
   Download,
   Upload,
   Terminal,
-  X
+  X,
+  Zap
 } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '../theme/colors';
+import { APP_VERSION_TAG } from '../constants/appInfo';
 import ServerCard from '../components/ServerCard';
 
 export default function ServerListScreen({
@@ -34,8 +38,11 @@ export default function ServerListScreen({
   onDeleteServer,
   onOpenSettings,
   onOpenImport,
-  onOpenExport
+  onOpenExport,
+  updateInfo,
+  onOpenUpdateModal
 }) {
+  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [serverToDelete, setServerToDelete] = useState(null);
 
@@ -59,7 +66,15 @@ export default function ServerListScreen({
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: Math.max(insets.top, Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 20) + 6,
+          paddingBottom: Math.max(insets.bottom, 12),
+        },
+      ]}
+    >
       {/* Top Header matching Desktop App.jsx */}
       <View style={styles.header}>
         <View style={styles.brandingRow}>
@@ -71,8 +86,18 @@ export default function ServerListScreen({
             <View style={styles.titleRow}>
               <Text style={styles.appTitle}>Glyph</Text>
               <View style={styles.versionBadge}>
-                <Text style={styles.versionText}>v1.0.0</Text>
+                <Text style={styles.versionText}>{APP_VERSION_TAG}</Text>
               </View>
+              {updateInfo?.updateAvailable && (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={onOpenUpdateModal}
+                  style={styles.updatePillBadge}
+                >
+                  <Zap size={11} color="#ffffff" style={{ marginRight: 3 }} />
+                  <Text style={styles.updatePillText}>{updateInfo.latestVersion}</Text>
+                </TouchableOpacity>
+              )}
             </View>
             <Text style={styles.appSubtitle}>Secure SSH & Server Management</Text>
           </View>
@@ -226,7 +251,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0d14',
-    paddingTop: Platform.OS === 'ios' ? 44 : 20,
   },
   header: {
     paddingHorizontal: 20,
@@ -281,6 +305,23 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: COLORS.primaryLight,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  updatePillBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#6366f1',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#818cf8',
+    marginLeft: 4,
+  },
+  updatePillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#ffffff',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   appSubtitle: {
